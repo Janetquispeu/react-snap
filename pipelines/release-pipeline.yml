@@ -1,0 +1,27 @@
+stages:
+- stage: Release
+  jobs:
+  - deployment: Deploy
+    displayName: 'Continuous_Delivery'
+    pool:
+      vmImage: 'ubuntu-18.04'
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - task: DownloadSecureFile@1
+              name: gcpcredentials
+              inputs:
+                secureFile: 'gcp-credentials.json'
+              displayName: 'Download GCP Credentials.'
+
+            - script: |
+                make login GCP_CREDENTIALS=$(gcpcredentials.secureFilePath)
+              workingDirectory: /home/vsts/work/1/artifacts
+              displayName: 'GCP Activate Service Account.'
+
+            - script: |
+                make uploading-files
+              workingDirectory: /home/vsts/work/1/artifacts
+              displayName: 'Uploading-files'

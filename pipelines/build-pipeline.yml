@@ -1,0 +1,55 @@
+stages:
+  - stage: Build
+    jobs:
+    - job: Continuous_Integration
+      pool:
+        vmImage: 'ubuntu-18.04'
+      workspace:
+        clean: all
+      variables:
+        environment: $(Build.SourceBranchName)
+      steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '8.x'
+          displayName: 'Install Node.'
+
+        - task: DownloadSecureFile@1
+          name: gcpcredentials
+          inputs:
+            secureFile: 'gcp-credentials.json'
+          displayName: 'Download GCP credentials.'
+
+        - script: |
+            make login GCP_CREDENTIALS=$(gcpcredentials.secureFilePath)
+            make sync-environments ENVIRONMENT=$([ $(environment) == master ] && echo 'prod' || echo $(environment))
+          workingDirectory: '$(System.DefaultWorkingDirectory)'
+          displayName: 'Sync environments.'
+
+        - script: |
+            make install
+          displayName: 'Install dependencies.'
+
+        - script: |
+            make build
+          displayName: 'Build compiled code.'
+
+        - task: CopyFiles@2
+          inputs:
+            SourceFolder: '$(System.DefaultWorkingDirectory)'
+            Contents: |
+              app/dist/**
+              scripts/**
+              environments/.env
+              makefile
+            TargetFolder: '$(Build.ArtifactStagingDirectory)'
+          displayName: 'Copy results.'
+
+        - task: PublishBuildArtifacts@1
+          inputs:
+            pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+            artifactName: 'artifacts'
+            publishLocation: 'Container'
+            parallel: true
+            parallelCount: 8
+          displayName: 'Publish artifacts.'
