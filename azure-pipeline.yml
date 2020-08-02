@@ -1,8 +1,0 @@
-trigger:
-  batch: true
-  branches:
-    include:
-      - master
-stages:
-  - template: ./pipelines/build-pipeline.yml
-  - template: ./pipelines/release-pipeline.yml
