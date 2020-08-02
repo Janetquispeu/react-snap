@@ -10,7 +10,8 @@
     "lint": "eslint '**/*.tsx'",
     "stats": "webpack --profile --json --config config/webpack/prod.js > stats.json",
     "analyze": "webpack-bundle-analyzer stats.json dist/",
-    "server": "node mock/index.js"
+    "server": "node mock/index.js",
+    "publish": "git subtree push --prefix dist origin gh-pages"
   },
   "author": "marketplace <odiseo.marketplace@gmail.com>",
   "license": "ISC",
